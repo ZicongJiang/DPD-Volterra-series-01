@@ -1,4 +1,4 @@
-function P_4 = PAM_4(N,loopnum,snr,dB,symbol_rate,samples)
+function P_4 = PAM_4_ADC(N,loopnum,snr,~,symbol_rate,samples)
 %SER calculation for 4PAM signal
 Rs = symbol_rate;
 L = samples;
@@ -11,17 +11,16 @@ for n = 1:loopnum
     x_4= randsrc(1,N,alpha4pam_2);
     x_gauss = pulse_shape(N,Rs,L,x_4);
     Eav = mean(x_4.^2);
-    % Eav = sum(x_gauss.^2)/N;
-    %     Eav = E_av(E,4);
-    %     p = pow2db(mean(x_4.^2)); % 2
+
+    x_gauss = Quantnoise_TX(x_gauss,N,L*2); % Quantnoise_Tx
+
     for i=1:length(snr)
         N0=Eav/snr(i)/2;% calculate the power of noise
-        %         N0_dB=10*log10(N0);% power of noise to dBW
-        %         ni=wgn(1,N,N0_dB);% gaussian noise
-        %         yR_4 = x_4+ni;
 
         ni = sqrt(N0)*randn(1,length(x_gauss));
         yR_4 = x_gauss+ni;
+
+        yR_4 = Quantnoise_RX(yR_4,N,L*2);
 
         samplesPerSymbol = length(x_gauss)/N;
         Etx_downsampled = yR_4((samplesPerSymbol/2+1):samplesPerSymbol:end);

@@ -1,17 +1,23 @@
-function P_ook = OOK(N,loopnum,dB,snr,symbol_rate,samples,Fs)
+function P_ook = OOK_ADC(N,loopnum,dB,snr,symbol_rate,samples)
 
 
 %SER calculation for OOK signal
 Rs = symbol_rate;
 bitrate = Rs; % cut-off frequency follow Nyquist criteira, bandwidth:  bitrate/2 <= B
-L = samples;
+L = samples; % samples per symbol
 P_avg = zeros(1,length(dB));
+A =bitrate/2; % parameter of besself (Angular frequency)
+B =bitrate*2; % parameter of bilinear  (Sample rate)
+
 for n = 1:loopnum
     x=randi([0,1],1,N); % random signal
     x_gauss = pulse_shape(N,Rs,L,x);
+    
+    x_gauss = Quantnoise_TX(x_gauss,A,B); % Quantnoise_Tx
+%     samplesPerSymbol = length(x_gauss)/N;
+%     etx = x_gauss((samplesPerSymbol/2+1):samplesPerSymbol:end);
     Eav = mean(x.^2);
-
-%     x_gauss = Quantnoise_TX(x_gauss,bitrate); % Quantnoise_Tx
+%     x_gauss = Quantnoise_TX(x_gauss,bitrate,bitrate*2); % Quantnoise_Tx
 
 
     for i=1:length(dB)
@@ -23,7 +29,7 @@ for n = 1:loopnum
             yR = x_gauss+ni;
 
 %         yR = awgn(x,dB(i),p);
-%         yR = Quantnoise_RX(yR,bitrate);
+        yR = Quantnoise_RX(yR,A,B);
 
         samplesPerSymbol = length(yR)/N;
         Etx_downsampled = yR((samplesPerSymbol/2+1):samplesPerSymbol:end);
